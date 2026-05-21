@@ -1,0 +1,25 @@
+{
+  "name": "@starknetfoundation/starknet-agentic-x402-starknet",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "pnpm --filter @starknetfoundation/starknet-agentic-shared build && tsup src/index.ts --format esm && tsc -p tsconfig.build.json --noCheck",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@starknetfoundation/starknet-agentic-shared": "workspace:*",
+    "starknet": "^10.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "eslint": "^10.4.0",
+    "@eslint/js": "^10.0.1",
+    "typescript": "^6.0.3",
+    "tsup": "^8.5.0",
+    "vitest": "^4.1.7"
+  }
+}

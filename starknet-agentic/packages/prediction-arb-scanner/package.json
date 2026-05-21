@@ -1,0 +1,33 @@
+{
+  "name": "@starknetfoundation/starknet-agentic-prediction-arb-scanner",
+  "version": "0.1.1",
+  "description": "Signals-only prediction market arb scanner (Polymarket x Limitless x Raize), Starknet-native output model.",
+  "author": "Starknet Agentic Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keep-starknet-strange/starknet-agentic",
+    "directory": "packages/prediction-arb-scanner"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm && tsc -p tsconfig.build.json --noCheck",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsup": "^8.5.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
+  }
+}

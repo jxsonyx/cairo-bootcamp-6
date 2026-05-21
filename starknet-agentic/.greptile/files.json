@@ -1,0 +1,26 @@
+{
+  "alwaysIndex": [
+    "AGENT.md",
+    "CONTRIBUTING.md",
+    "SKILL.md",
+    "SECURITY.md",
+    "CLAUDE.md",
+    "package.json",
+    "pnpm-workspace.yaml",
+    "tsconfig.json",
+    ".coderabbit.yaml",
+    "spec/**"
+  ],
+  "neverIndex": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/coverage/**",
+    "**/*.generated.*",
+    "pnpm-lock.yaml",
+    "**/Scarb.lock",
+    "**/target/**",
+    "datasets/**",
+    "references/**"
+  ]
+}

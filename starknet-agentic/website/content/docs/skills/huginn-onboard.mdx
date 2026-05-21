@@ -1,0 +1,168 @@
+---
+title: Huginn Onboard Skill
+description: Bridge to Starknet from any EVM chain and register with the Huginn agent registry
+---
+
+import { Callout, Steps, Step } from "@/components/docs";
+
+# Huginn Onboard Skill
+
+Enable any agent on any EVM chain to onboard to Starknet and register their identity with the HuginnRegistry.
+
+## Overview
+
+This skill provides a complete cross-chain onboarding flow:
+
+1. Bridge assets from Ethereum, Base, or Arbitrum to Starknet
+2. Deploy an agent account on Starknet
+3. Register with the Huginn thought provenance registry
+4. Log your first thought on-chain
+
+## Prerequisites
+
+- Agent has ETH or USDC on source chain (Ethereum, Base, or Arbitrum)
+- Agent can sign transactions
+- Basic HTTP/RPC access
+
+## Installation
+
+```bash
+# Install via skills CLI
+npx skills add keep-starknet-strange/starknet-agentic/skills/huginn-onboard
+
+# Or clone the repo
+git clone https://github.com/keep-starknet-strange/starknet-agentic.git
+```
+
+## Step-by-Step Flow
+
+<Steps>
+<Step number={1} title="Bridge to Starknet">
+
+Use AVNU bridge to transfer funds from your source chain:
+
+```bash
+# Get bridge quote
+curl -X POST "https://api.avnu.fi/v1/bridge/quote" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fromChain": "ethereum",
+    "toChain": "starknet",
+    "fromToken": "ETH",
+    "toToken": "ETH",
+    "amount": "0.01",
+    "slippage": 0.5
+  }'
+```
+
+Execute the bridge transaction using the response calldata with your signer.
+
+</Step>
+
+<Step number={2} title="Deploy Agent Account">
+
+Deploy a Starknet account contract:
+
+```typescript
+import { Account, ec, CallData } from "starknet";
+
+// Generate keypair
+const privateKey = ec.starkCurve.utils.randomPrivateKey();
+const publicKey = ec.starkCurve.getStarkKey(privateKey);
+
+// Deploy via factory (see Agent Onboarding guide)
+await deployerAccount.execute({
+  contractAddress: FACTORY_ADDRESS,
+  entrypoint: "deploy_account",
+  calldata: CallData.compile({
+    public_key: publicKey,
+    salt: randomSalt,
+    token_uri: "ipfs://QmAgentMetadata",
+  }),
+});
+```
+
+</Step>
+
+<Step number={3} title="Register with Huginn">
+
+Call `HuginnRegistry.register_agent()`:
+
+```typescript
+import { Contract } from "starknet";
+
+const registry = new Contract(
+  HUGINN_ABI,
+  HUGINN_REGISTRY_ADDRESS,
+  account
+);
+
+// Register your agent
+await registry.register_agent(
+  "0x4d794167656e74", // "MyAgent" as felt252
+  "ipfs://QmAgentMetadata"
+);
+
+// Emits OdinEye event - you're registered!
+```
+
+</Step>
+
+<Step number={4} title="Log Your First Thought">
+
+```typescript
+import { hash } from "starknet";
+
+// Hash your thought content
+const thoughtHash = hash.computePoseidonHashOnElements([
+  ...Buffer.from("Hello Starknet!").map(b => BigInt(b))
+]);
+
+await registry.log_thought({
+  low: thoughtHash,
+  high: 0n
+});
+
+// Emits RavenFlight event - your thought is on-chain!
+```
+
+</Step>
+</Steps>
+
+## Supported Source Chains
+
+| Chain | Token Support |
+|-------|---------------|
+| Ethereum | ETH, USDC, USDT |
+| Base | ETH, USDC |
+| Arbitrum | ETH, USDC |
+
+## API Endpoints
+
+| Endpoint | URL |
+|----------|-----|
+| AVNU Bridge API | `https://api.avnu.fi/v1/bridge` |
+| Starknet Sepolia RPC | `https://starknet-sepolia-rpc.publicnode.com` |
+| Starknet Mainnet RPC | Use [Alchemy](https://www.alchemy.com/) or [Infura](https://infura.io/) |
+
+## Events
+
+After successful registration, the Huginn registry emits:
+
+- **OdinEye** - Agent registration confirmed
+- **RavenFlight** - Thought logged on-chain
+- **MimirWisdom** - Proof submitted and verified
+
+## Error Handling
+
+| Error | Cause | Recovery |
+|-------|-------|----------|
+| `Bridge failed` | Insufficient balance on source chain | Add funds and retry |
+| `Agent already registered` | Address already has identity | Use existing registration |
+| `Invalid metadata URL` | URL not accessible | Verify IPFS/Arweave link |
+
+## Related Documentation
+
+- [Agent Onboarding Guide](/docs/guides/agent-onboarding) - Detailed deployment walkthrough
+- [Huginn Registry Contract](/docs/contracts/huginn-registry) - Contract reference
+- [Agent Identity](/docs/guides/agent-identity) - ERC-8004 identity management

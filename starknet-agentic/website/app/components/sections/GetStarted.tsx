@@ -1,0 +1,105 @@
+import Link from "next/link";
+import { STEPS, EXTERNAL_LINKS } from "@/data/get-started";
+import { InstallCommand } from "@/components/Hero/InstallCommand";
+import { StepCard } from "@/components/ui/StepCard";
+
+const CODEX_CAIRO_AUDITOR_PROMPT = [
+  "Run cairo-auditor on path/to/your_contract.cairo with --file-output.",
+  "Output only the final report.",
+].join("\n");
+
+const CLAUDE_CAIRO_AUDITOR_PROMPT = [
+  "/starknet-agentic-skills:cairo-auditor path/to/your_contract.cairo --file-output",
+].join("\n");
+
+export function GetStarted() {
+  return (
+    <section id="get-started" className="section-padding bg-neo-yellow bg-dots">
+      <div className="max-w-4xl mx-auto text-center">
+        <h2 className="font-heading font-black text-4xl md:text-5xl lg:text-7xl mb-6">
+          Build the Future.
+          <br />
+          One Agent at a Time.
+        </h2>
+        <p className="font-body text-lg md:text-xl text-neo-dark/70 max-w-2xl mx-auto mb-10">
+          Get started with a single command. Create an AI agent with a Starknet
+          wallet, on-chain identity, and DeFi superpowers in minutes.
+        </p>
+
+        {/* Install command */}
+        <div className="max-w-xl mx-auto mb-10">
+          <InstallCommand variant="large" />
+        </div>
+
+        <div className="neo-card p-6 md:p-8 mb-12 bg-white text-left">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
+            <div>
+              <h3 className="font-heading font-bold text-2xl text-neo-dark mb-2">
+                Try Cairo Auditor First
+              </h3>
+              <p className="text-neo-dark/70 max-w-2xl">
+                After installing the skill from the 30-second guide, run it on any local Cairo contract in your own workspace to generate a real{" "}
+                <code className="px-1.5 py-0.5 bg-neo-dark/5 rounded text-sm">security-review-*.md</code> report before
+                you wire the rest of the stack.
+              </p>
+            </div>
+            <Link
+              href="/docs/skills/cairo-auditor"
+              className="neo-btn-secondary text-sm py-2 px-4 whitespace-nowrap"
+            >
+              Install + 30-second guide
+            </Link>
+          </div>
+
+          <p className="mb-4 text-sm text-neo-dark/70">
+            First time here? Step 1 is the install flow in the guide. Step 2 is one of the runtime prompts below.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border-2 border-neo-dark/10 rounded p-4">
+              <p className="text-sm font-heading font-bold text-neo-dark mb-2">Codex</p>
+              <code className="block whitespace-pre-wrap break-all text-xs md:text-sm bg-neo-dark text-white rounded px-3 py-3">
+                {CODEX_CAIRO_AUDITOR_PROMPT}
+              </code>
+            </div>
+            <div className="border-2 border-neo-dark/10 rounded p-4">
+              <p className="text-sm font-heading font-bold text-neo-dark mb-2">Claude Code</p>
+              <code className="block whitespace-pre-wrap break-all text-xs md:text-sm bg-neo-dark text-white rounded px-3 py-3">
+                {CLAUDE_CAIRO_AUDITOR_PROMPT}
+              </code>
+            </div>
+          </div>
+
+          <p className="mt-4 text-sm text-neo-dark/70">
+            Use your own local Cairo path first. If you do not have a project handy yet, the 30-second guide includes a self-contained vulnerable demo file and the maintainer regression fixture.
+          </p>
+        </div>
+
+        {/* Three steps */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+          {STEPS.map((item) => (
+            <StepCard key={item.step} item={item} />
+          ))}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href={EXTERNAL_LINKS.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="neo-btn-dark text-lg py-4 px-8"
+          >
+            GitHub Repository
+            <span className="sr-only"> (opens in new tab)</span>
+          </a>
+          <Link
+            href="/docs"
+            className="neo-btn-secondary text-lg py-4 px-8"
+          >
+            Read the Docs
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}

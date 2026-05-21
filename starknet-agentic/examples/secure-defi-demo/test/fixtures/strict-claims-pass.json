@@ -1,0 +1,47 @@
+{
+  "strictSecurityProof": true,
+  "claims": [
+    {
+      "claimId": "oversized_spend_denied",
+      "required": true,
+      "proof_status": "proved",
+      "tx_hash": "0x1111",
+      "evidence_path": "steps.policy_rejection_probe"
+    },
+    {
+      "claimId": "forbidden_selector_denied",
+      "required": true,
+      "proof_status": "proved",
+      "tx_hash": null,
+      "evidence_path": "steps.forbidden_selector_probe"
+    },
+    {
+      "claimId": "revoked_or_expired_session_blocked",
+      "required": true,
+      "proof_status": "proved",
+      "tx_hash": null,
+      "evidence_path": "steps.expired_session_probe"
+    },
+    {
+      "claimId": "erc8004_identity_path",
+      "required": true,
+      "proof_status": "proved",
+      "tx_hash": null,
+      "evidence_path": "steps.erc8004_identity"
+    },
+    {
+      "claimId": "base_to_starknet_anchor_verified",
+      "required": true,
+      "proof_status": "proved",
+      "tx_hash": "0x2222",
+      "evidence_path": "steps.base_attestation_anchor"
+    },
+    {
+      "claimId": "starkzap_execution_receipt",
+      "required": false,
+      "proof_status": "not_applicable",
+      "tx_hash": null,
+      "evidence_path": "artifacts/secure-defi-demo.json"
+    }
+  ]
+}

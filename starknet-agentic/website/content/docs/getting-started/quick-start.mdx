@@ -1,0 +1,272 @@
+---
+title: Quick Start
+description: Get up and running in 5 minutes
+---
+
+import { Callout, Steps, Step, Collapsible } from "@/components/docs";
+
+# Quick Start
+
+Get your AI agent running on Starknet in **under 5 minutes**. The CLI auto-detects your environment and configures Starknet accordingly.
+
+## Prerequisites
+
+- **Node.js 18+** installed ([download](https://nodejs.org/))
+- A Starknet wallet (Ready or Braavos recommended)
+
+## One Command Setup
+
+```bash
+npx create-starknet-agent@latest
+```
+
+The CLI detects your environment and sets up Starknet:
+
+| Environment | What Happens |
+|-------------|--------------|
+| **OpenClaw / MoltBook** | Configures MCP server + installs skills |
+| **Claude Code** | Adds MCP config to `.mcp.json` |
+| **Cursor** | Configures MCP in Cursor settings |
+| **None detected** | Scaffolds a standalone agent project |
+
+## Platform-Specific Setup
+
+### OpenClaw / MoltBook Users
+
+If you're using OpenClaw, the CLI configures everything automatically:
+
+```bash
+npx create-starknet-agent@latest
+```
+
+Or let your agent self-configure:
+```bash
+# Agent runs this in non-interactive mode
+npx create-starknet-agent@latest --non-interactive --json
+```
+
+**What gets configured:**
+- MCP server pointing to `@starknet-agentic/mcp-server`
+- Skills: `starknet-wallet`, `starknet-defi`
+- Environment template for credentials
+
+**After setup:**
+1. Add your credentials: `npx create-starknet-agent credentials`
+2. Restart your agent
+3. Try: "What's my ETH balance on Starknet?"
+
+### Claude Code Users
+
+```bash
+npx create-starknet-agent@latest
+```
+
+**What gets configured:**
+- MCP server in `.mcp.json`
+- CLAUDE.md updated with Starknet skill references
+- `.env.example` with required variables
+
+**After setup:**
+1. Configure credentials: `npx create-starknet-agent credentials`
+2. Restart Claude Code
+3. Verify: `/mcp` should show the starknet server
+
+### Cursor Users
+
+```bash
+npx create-starknet-agent@latest
+```
+
+**What gets configured:**
+- MCP configuration in Cursor settings
+- Environment template
+
+### Standalone Agent
+
+For building a custom agent from scratch:
+
+```bash
+npx create-starknet-agent@latest my-agent
+cd my-agent
+cp .env.example .env
+# Edit .env with your credentials
+pnpm start
+```
+
+Your agent will be available at `http://localhost:3000`.
+
+<Collapsible title="Standalone Features">
+
+- **Autonomous Agent Loop** — Event-driven processing with scheduled tasks
+- **Web UI Dashboard** — Chat interface, balance display, transaction history
+- **MCP Server Integration** — Starknet tools via starknet-mcp-server
+- **Skill System** — Load skills from starknet-agentic or custom GitHub URLs
+- **Multi-LLM Support** — Claude API, OpenAI, Ollama, or Claude Code CLI
+- **On-Chain Identity** — Optional ERC-8004 registration for trust and reputation
+- **A2A Protocol** — Agent discovery via `/.well-known/agent.json`
+- **SQLite Storage** — Persistent conversations, transactions, and logs
+- **Docker Ready** — Production deployment with included Dockerfile
+
+</Collapsible>
+
+## Configure Credentials
+
+After platform setup, configure your wallet credentials:
+
+```bash
+npx create-starknet-agent credentials
+```
+
+The wizard guides you through:
+1. **Network selection** — Sepolia (testnet) or Mainnet
+2. **Wallet export** — Instructions for Ready or Braavos
+3. **Secure storage** — Credentials stored safely for your platform
+
+<Callout type="info" title="Credential Storage">
+  **OpenClaw**: Stored in `~/.openclaw/secrets/starknet/`
+
+  **Other platforms**: Stored in `.env` file (automatically gitignored)
+</Callout>
+
+### Getting Your Credentials
+
+**Ready Wallet:**
+1. Install [Ready Wallet](https://www.ready.co/download-ready-wallet)
+2. Create/import wallet on **Sepolia Testnet**
+3. Settings → Account → Export Private Key
+4. Get testnet tokens from the [Starknet Faucet](https://starknet-faucet.vercel.app/)
+
+**Braavos Wallet:**
+1. Install [Braavos](https://braavos.app/)
+2. Account Settings → Security → Export Private Key
+3. Copy account address from wallet header
+
+**RPC Endpoint:**
+- [Alchemy](https://www.alchemy.com/) — Create account → New App → Starknet
+- [Infura](https://infura.io/) — Create account → New Project → Starknet
+
+## Verify Setup
+
+Confirm everything is working:
+
+```bash
+npx create-starknet-agent verify
+```
+
+This checks:
+- MCP server configuration exists
+- Required credentials are set
+- Skills are installed
+- Can query Starknet (optional balance check)
+
+**Output:**
+```
+✓ MCP configuration found
+✓ Credentials configured
+✓ Skills installed: starknet-wallet, starknet-defi
+✓ Connected to Starknet Sepolia
+✓ Account balance: 0.5 ETH
+```
+
+## Test the Connection
+
+Once verified, test with your AI assistant:
+
+**In Claude Code:**
+> Check my STRK balance
+
+**Expected:**
+> Using starknet_get_balance tool...
+> Your STRK balance is 1,234.56 STRK
+
+## CLI Reference
+
+```bash
+# Auto-detect platform and configure
+npx create-starknet-agent@latest
+
+# Force specific platform
+npx create-starknet-agent@latest --platform openclaw
+npx create-starknet-agent@latest --platform claude-code
+npx create-starknet-agent@latest --platform cursor
+npx create-starknet-agent@latest --platform standalone
+
+# Configure credentials
+npx create-starknet-agent credentials
+
+# Verify setup
+npx create-starknet-agent verify
+
+# Non-interactive (for agent self-setup)
+npx create-starknet-agent@latest --non-interactive --json
+
+# Show detected platforms
+npx create-starknet-agent@latest --detect-only
+```
+
+| Option | Description |
+|--------|-------------|
+| `--platform <name>` | Force platform: `openclaw`, `claude-code`, `cursor`, `standalone` |
+| `--skills <list>` | Comma-separated skills to install |
+| `--network <name>` | Network: `mainnet`, `sepolia` |
+| `--non-interactive` | Skip all prompts (for agent self-setup) |
+| `--json` | Output machine-readable JSON |
+| `--detect-only` | Show detected platform and exit |
+| `--yes`, `-y` | Accept defaults |
+
+## What's Next?
+
+| Guide | Description |
+|-------|-------------|
+| [MCP Server Setup](/docs/guides/mcp-server) | Full MCP integration guide |
+| [Agent Onboarding](/docs/guides/agent-onboarding) | Deploy new agent accounts with gasfree |
+| [Wallet Management](/docs/guides/wallet-management) | Transfers, multi-call, session keys |
+| [DeFi Operations](/docs/guides/defi-operations) | Swaps, quotes, gasless transactions |
+| [Agent Identity](/docs/guides/agent-identity) | Register your agent on-chain |
+
+## Troubleshooting
+
+<Collapsible title="Platform not detected correctly">
+
+Force the platform manually:
+
+```bash
+npx create-starknet-agent@latest --platform claude-code
+```
+
+Or check what was detected:
+
+```bash
+npx create-starknet-agent@latest --detect-only
+```
+
+</Collapsible>
+
+<Collapsible title="MCP server not appearing">
+
+1. Run `npx create-starknet-agent verify` to check configuration
+2. Ensure credentials are set: `npx create-starknet-agent credentials`
+3. Restart your AI assistant completely
+
+</Collapsible>
+
+<Collapsible title="'Cannot find module' error">
+
+The MCP server hasn't been built. If using the monorepo:
+
+```bash
+cd starknet-agentic
+pnpm install && pnpm build
+```
+
+</Collapsible>
+
+<Collapsible title="'Insufficient balance' error">
+
+Get testnet tokens from the [Starknet Faucet](https://starknet-faucet.vercel.app/).
+
+</Collapsible>
+
+---
+
+Need more help? [Open an issue](https://github.com/keep-starknet-strange/starknet-agentic/issues) on GitHub.

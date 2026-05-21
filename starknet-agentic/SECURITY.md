@@ -1,0 +1,44 @@
+# Security Policy
+
+## Reporting a Vulnerability
+
+If you discover a security vulnerability, please report it privately.
+
+- Preferred: open a private advisory via [GitHub Private Vulnerability Reporting](https://github.com/keep-starknet-strange/starknet-agentic/security/advisories/new).
+  See [GitHub's docs on privately reporting a security vulnerability](https://docs.github.com/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability) for the workflow.
+- If private reporting is not available, open a security issue without exploit details and ask for a private channel.
+
+Please include:
+
+- affected package/path
+- impact and attack scenario
+- reproduction steps
+- suggested mitigation (if available)
+
+## Disclosure Process
+
+- We will acknowledge receipt as soon as possible.
+- The team will triage severity and scope, then prepare a fix.
+- Disclosure timing will be coordinated with the reporter.
+
+## Scope
+
+This policy covers the whole repository, including:
+
+- contracts under `contracts/`
+- protocol/spec files under `spec/` and `docs/`
+- workflows under `.github/workflows/`
+- published packages under `packages/`
+
+## Supported Versions
+
+This repository is pre-1.0.
+
+- Security fixes are applied to `main`.
+- Critical fixes may be backported to recent release branches when they exist.
+
+## Release Provenance Verification
+
+Release artifact provenance verification is documented in:
+
+- [docs/security/PROVENANCE_VERIFICATION.md](docs/security/PROVENANCE_VERIFICATION.md)

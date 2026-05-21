@@ -1,0 +1,204 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+early_access: false
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: "auto"
+  issues:
+    scope: "auto"
+  jira:
+    project_keys: []
+  linear:
+    team_keys: []
+  pull_requests:
+    scope: "auto"
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  review_status: true
+  review_details: true
+  collapse_walkthrough: false
+  changed_files_summary: true
+  poem: false
+  fail_commit_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 0
+
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+
+  path_instructions:
+    - path: "contracts/session-account/**"
+      instructions: >
+        Treat session-account changes as wallet-grade security code.
+        Check signer authority boundaries, signature envelope invariants, replay resistance,
+        and policy-enforcement semantics. Flag any compatibility drift with SISNA and Starkclaw.
+        Reject any code that exposes private key material in logs, errors, or serialized state.
+        Verify that session key scope validation is enforced before every signing operation.
+    - path: "contracts/agent-account/**"
+      instructions: >
+        Agent account contracts define the on-chain identity boundary for AI agents.
+        Verify spending limits, execution policy enforcement, and account recovery logic.
+        Flag any path that allows unauthorized fund transfers or policy bypass.
+    - path: "contracts/erc8004-cairo/**"
+      instructions: >
+        ERC-8004 is the identity/reputation standard. Verify compliance with the spec.
+        Flag missing event emissions, incorrect interface IDs, or non-standard storage layouts.
+        Ensure backward compatibility with existing deployed contracts.
+    - path: "contracts/huginn-registry/**"
+      instructions: >
+        Registry contracts must maintain data integrity and access control.
+        Flag any unprotected write operations, missing input validation,
+        or signature verification gaps.
+    - path: "contracts/**/*.cairo"
+      instructions: >
+        Enforce strict Cairo security patterns. Flag missing access control on external functions,
+        unchecked felt252 arithmetic that can overflow, reentrancy vulnerabilities, and unsafe
+        storage access patterns. Verify that all state-modifying functions have proper authorization
+        guards. Flag any delegate call without target whitelist validation.
+    - path: "packages/starknet-mcp-server/**"
+      instructions: >
+        MCP server is the bridge between AI agents and Starknet. Prioritize input validation,
+        tool registration safety, and request authentication. Flag any tool that can execute
+        transactions without explicit user/agent approval. Verify proper error propagation.
+    - path: "packages/starknet-a2a/**"
+      instructions: >
+        A2A (Agent-to-Agent) protocol must maintain message integrity and authentication.
+        Flag any unsigned message passing, missing nonce validation, or replay attack vectors.
+    - path: "packages/starknet-agent-passport/**"
+      instructions: >
+        Agent passport handles identity verification. Flag any credential leak paths,
+        improper token validation, or missing revocation checks.
+    - path: "packages/x402-starknet/**"
+      instructions: >
+        x402 handles payment protocol integration. Flag any path that could allow
+        unauthorized payments, double-spending, or fee manipulation.
+    - path: "packages/**"
+      instructions: >
+        Validate API compatibility and backward compatibility for published packages.
+        Breaking API changes require explicit migration notes. Flag any removal or rename
+        of exported symbols without deprecation notice. Verify semver compliance.
+    - path: "skills/**"
+      instructions: >
+        Skills are composable agent capabilities. Each skill must have a clear interface contract,
+        proper input validation, deterministic output, and graceful error handling.
+        Flag any skill that makes unscoped network calls, stores state without cleanup,
+        or lacks proper type definitions. Verify skill metadata matches implementation.
+    - path: "evals/**"
+      instructions: >
+        Evaluation code must be deterministic and reproducible. Flag any test that depends
+        on external state, non-deterministic ordering, or hardcoded network endpoints.
+        Verify that eval metrics are properly documented and assertions are meaningful.
+    - path: ".github/workflows/**"
+      instructions: >
+        Ensure least-privilege permissions and safe CI execution patterns. Flag any workflow
+        with write permissions that doesn't strictly need them. Verify secrets are not exposed
+        in logs or artifacts. Dependency actions must use pinned SHA versions, not tags.
+    - path: "commands/**"
+      instructions: >
+        CLI commands must validate all inputs, handle errors gracefully, and never expose
+        secrets in stdout/stderr. Flag any command that modifies state without confirmation.
+    - path: "docs/**"
+      instructions: >
+        Security documentation must accurately reflect the current implementation.
+        Flag any discrepancy between documented and actual behavior. API docs must include
+        authentication and authorization requirements.
+    - path: "scripts/**"
+      instructions: >
+        Flag any script that runs with elevated privileges without justification.
+        Verify input sanitization in deployment scripts. Flag hardcoded credentials,
+        URLs, or environment-specific assumptions.
+    - path: "security/**"
+      instructions: >
+        Treat all security policy and audit changes as critical. Verify completeness
+        of threat model updates. Flag any weakening of security controls or removal
+        of security checks without explicit justification and review.
+    - path: "spec/**"
+      instructions: >
+        Spec changes define behavioral contracts. Flag any spec change that is not
+        accompanied by corresponding implementation updates. Verify backward
+        compatibility claims are accurate.
+    - path: "website/**"
+      instructions: >
+        Verify no secrets, API keys, or internal URLs are exposed in client-side code.
+        Check for XSS vectors in dynamic content. Ensure accessibility standards.
+
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: >
+        Use a clear scope prefix naming the touched subsystem
+        (contracts/packages/skills/docs/security/ci) and summarize the behavioral impact.
+    description:
+      mode: "warning"
+    issue_assessment:
+      mode: "warning"
+    custom_checks:
+      - name: "Spec impact declaration"
+        mode: "error"
+        instructions: >
+          If this PR changes contracts/session-account/**, packages/**, skills/**, docs/**,
+          or .github/workflows/**, the PR description must include "Spec impact"
+          with either "none" or concrete compatibility/migration notes.
+          Fail if the section is missing for qualifying paths.
+      - name: "Cross-repo boundary awareness"
+        mode: "error"
+        instructions: >
+          Boundary changes must acknowledge impacted repos:
+          keep-starknet-strange/starkclaw and omarespejel/SISNA.
+          If contracts/session-account/** or packages/** are changed, the PR
+          must declare cross-repo impact or explicitly state "no cross-repo impact".
+      - name: "Security rationale for account semantics"
+        mode: "error"
+        instructions: >
+          For changes in contracts/session-account/** or contracts/agent-account/**,
+          require a concise security rationale and explicit mention of invariants
+          preserved or changed. No account contract changes merge without
+          documented security reasoning.
+      - name: "Cairo contract safety gate"
+        mode: "error"
+        instructions: >
+          For changes in contracts/**/*.cairo, verify that all external/public
+          functions have explicit access control. Flag any new storage variable
+          without initialization guard. Verify felt252 operations are bounds-checked.
+          Fail if unsafe patterns are detected without mitigation documentation.
+      - name: "CI/CD security gate"
+        mode: "warning"
+        instructions: >
+          For changes in .github/workflows/**, flag any new or expanded permissions,
+          unpinned action versions, or secrets referenced without need-to-know scope.
+
+  path_filters:
+    - "!**/*.generated.*"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/.next/**"
+    - "!**/coverage/**"
+    - "!pnpm-lock.yaml"
+    - "!**/Scarb.lock"
+    - "!**/*.lock"
+
+  tools:
+    opengrep:
+      enabled: true
+    trufflehog:
+      enabled: true
+    biome:
+      enabled: true
+    eslint:
+      enabled: true
+    markdownlint:
+      enabled: true
+
+chat:
+  auto_reply: true

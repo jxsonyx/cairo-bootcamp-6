@@ -1,0 +1,23 @@
+{
+  "name": "@starknetfoundation/starknet-agentic-secure-defi-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic Base->Starknet secure DeFi demo (session key evidence + Vesu + policy rejection)",
+  "type": "module",
+  "scripts": {
+    "run": "npx tsx run.ts --mode dry-run",
+    "run:execute": "npx tsx run.ts --mode execute",
+    "run:withdraw": "npx tsx run.ts --mode execute --with-withdraw",
+    "run:strict": "STRICT_SECURITY_PROOF=1 npx tsx run.ts --mode execute",
+    "test": "node --test --import tsx test/*.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "dotenv": "^17.4.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  }
+}

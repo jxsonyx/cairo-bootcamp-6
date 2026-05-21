@@ -1,0 +1,266 @@
+---
+title: Agent Onboarding
+description: Deploy new agent accounts with ERC-8004 identity and gasfree support
+---
+
+import { Callout, Steps, Step } from "@/components/docs";
+
+# Agent Onboarding
+
+This guide covers the complete flow for deploying a new AI agent account on Starknet with on-chain identity (ERC-8004) and optional gasfree transactions.
+
+## Overview
+
+Agent onboarding is a three-step process:
+
+1. **Preflight** - Validate environment and deployer account
+2. **Deploy Account** - Create the agent account with identity binding
+3. **First Action** - Verify the account works
+
+The result is a fully functional agent account with:
+- Its own keypair (generated locally)
+- An ERC-8004 identity NFT
+- Ready for session keys and DeFi operations
+
+## Prerequisites
+
+You need:
+
+- **Node.js 18+**
+- **A funded deployer account** (existing Starknet account that pays for deployment)
+- **RPC endpoint** (Sepolia or Mainnet)
+
+## Quick Start with onboard-agent Example
+
+The fastest way to onboard an agent:
+
+```bash
+cd examples/onboard-agent
+cp .env.example .env
+# Edit .env with your deployer credentials
+pnpm install
+pnpm onboard
+```
+
+### CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `--network sepolia` | Target network (default: sepolia) |
+| `--gasfree` | Use sponsored gas via AVNU paymaster |
+| `--verify-tx` | Send optional verification transaction |
+| `--salt 0x123` | Deterministic address with specific salt |
+| `--token-uri ipfs://...` | Custom metadata URI |
+
+### Example Commands
+
+```bash
+# Standard deployment
+pnpm onboard
+
+# Gasfree deployment (requires AVNU_PAYMASTER_API_KEY)
+pnpm onboard:gasfree
+
+# With verification transaction
+pnpm onboard:verify
+```
+
+## Environment Configuration
+
+Create a `.env` file with:
+
+```env
+# Required
+STARKNET_RPC_URL=https://starknet-sepolia-rpc.publicnode.com
+DEPLOYER_ADDRESS=0x...      # Existing account that pays for deployment
+DEPLOYER_PRIVATE_KEY=0x...  # Private key for deployer
+
+# Optional (for gasfree mode)
+AVNU_PAYMASTER_URL=https://sepolia.paymaster.avnu.fi
+AVNU_PAYMASTER_API_KEY=your-api-key
+```
+
+<Callout type="warning" title="Security">
+  The deployer account is NOT the new agent account. It's an existing account used only to pay for the deployment transaction. The new agent gets its own separate keypair.
+</Callout>
+
+## Deployed Addresses
+
+### Sepolia Testnet
+
+**AgentAccountFactory:**
+`0x358301e1c530a6100ae2391e43b2dd4dd0593156e59adab7501ff6f4fe8720e`
+
+**IdentityRegistry:**
+`0x72eb37b0389e570bf8b158ce7f0e1e3489de85ba43ab3876a0594df7231631`
+
+For canonical address reconciliation (including legacy Sepolia set), see `docs/DEPLOYMENT_TRUTH_SHEET.md`.
+
+## The Onboarding Flow
+
+### Step 1: Preflight
+
+The preflight step validates your environment:
+
+```typescript
+import { RpcProvider, Account, constants } from "starknet";
+
+const provider = new RpcProvider({ nodeUrl: process.env.STARKNET_RPC_URL });
+const account = new Account(
+  provider,
+  process.env.DEPLOYER_ADDRESS,
+  process.env.DEPLOYER_PRIVATE_KEY,
+  undefined,
+  constants.TRANSACTION_VERSION.V3
+);
+
+// Verify chain ID
+const chainId = await provider.getChainId();
+console.log("Connected to:", chainId);
+
+// Check deployer balance
+const ethBalance = await getBalance(provider, account.address, ETH_ADDRESS);
+console.log("ETH balance:", ethBalance);
+```
+
+### Step 2: Deploy Account
+
+The deployment generates a new keypair and calls the factory:
+
+```typescript
+import { ec, CallData } from "starknet";
+
+// Generate new keypair locally (never leaves your machine)
+const privateKeyBytes = ec.starkCurve.utils.randomPrivateKey();
+const privateKey = "0x" + Buffer.from(privateKeyBytes).toString("hex");
+const publicKey = ec.starkCurve.getStarkKey(privateKeyBytes);
+
+// Random salt for unique address
+const salt = "0x" + Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("hex");
+
+// Call factory
+const result = await deployerAccount.execute({
+  contractAddress: FACTORY_ADDRESS,
+  entrypoint: "deploy_account",
+  calldata: CallData.compile({
+    public_key: publicKey,
+    salt: salt,
+    token_uri: "ipfs://QmAgentMetadata",
+  }),
+});
+
+// Wait for receipt and extract deployed address
+const receipt = await provider.waitForTransaction(result.transaction_hash);
+```
+
+The factory atomically:
+1. Deploys a new AgentAccount contract
+2. Registers identity with ERC-8004 IdentityRegistry
+3. Mints identity NFT to the new account
+4. Emits `AccountDeployed` event with address and agent ID
+
+### Step 3: Verify (Optional)
+
+Send a self-transfer to verify the account works:
+
+```typescript
+const agentAccount = new Account(
+  provider,
+  deployedAccountAddress,
+  privateKey,
+  undefined,
+  constants.TRANSACTION_VERSION.V3
+);
+
+// Zero-value self-transfer
+await agentAccount.execute({
+  contractAddress: ETH_ADDRESS,
+  entrypoint: "transfer",
+  calldata: CallData.compile({
+    recipient: deployedAccountAddress,
+    amount: { low: 0, high: 0 },
+  }),
+});
+```
+
+## Gasfree Deployment
+
+With gasfree mode, the AVNU paymaster sponsors gas fees:
+
+```typescript
+import { PaymasterRpc } from "starknet";
+
+const paymaster = new PaymasterRpc({
+  nodeUrl: "https://sepolia.paymaster.avnu.fi",
+  headers: { "x-paymaster-api-key": process.env.AVNU_PAYMASTER_API_KEY },
+});
+
+const result = await deployerAccount.execute([deployCall], {
+  paymaster: {
+    provider: paymaster,
+    params: {
+      version: "0x1",
+      feeMode: { mode: "sponsored" },
+    },
+  },
+});
+```
+
+<Callout type="info" title="API Key Required">
+  Sponsored gasfree mode requires an `AVNU_PAYMASTER_API_KEY`. Contact AVNU for access.
+</Callout>
+
+## Onboarding Receipt
+
+After successful deployment, you get a receipt:
+
+```json
+{
+  "version": "1",
+  "chain_id": "SN_SEPOLIA",
+  "network": "sepolia",
+  "account_address": "0x05e4f6a7b8c9d0...",
+  "agent_id": "42",
+  "public_key": "0x04a7b3c8d9e1f2...",
+  "identity_registry": "0x7856876f4c8e1880bc0...",
+  "factory_address": "0x358301e1c530a6...",
+  "deploy_tx_hash": "0x7f3a2bc1...",
+  "timestamp": "2026-02-09T..."
+}
+```
+
+<Callout type="warning" title="Save Your Credentials">
+  The private key is only shown once. Store it securely - you cannot recover it later.
+</Callout>
+
+## Using the MCP Tool
+
+The MCP server also provides a deployment tool:
+
+```json
+{
+  "name": "starknet_deploy_agent_account",
+  "arguments": {
+    "public_key": "0x04a7b3c8d9e1f2a6b5c4d3e2f1a0b9c8d7e6f5a4",
+    "token_uri": "ipfs://QmAgentMetadata123",
+    "gasfree": true
+  }
+}
+```
+
+Requires `AGENT_ACCOUNT_FACTORY_ADDRESS` environment variable.
+
+## Next Steps
+
+After onboarding:
+
+1. **[Fund the account](/docs/guides/wallet-management)** - Transfer tokens for operations
+2. **[Set up session keys](/docs/contracts/agent-account)** - Enable limited autonomous actions
+3. **[Connect to MCP](/docs/guides/mcp-server)** - Integrate with AI assistants
+4. **[DeFi operations](/docs/guides/defi-operations)** - Start swapping and staking
+
+## Related Documentation
+
+- [Agent Account Contract](/docs/contracts/agent-account) - Session keys and upgrades
+- [ERC-8004 Overview](/docs/contracts/erc-8004-overview) - Identity standard
+- [MCP Tools Reference](/docs/api-reference/mcp-tools) - All available tools

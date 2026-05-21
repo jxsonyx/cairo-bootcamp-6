@@ -1,0 +1,30 @@
+{
+  "name": "@starknetfoundation/starknet-agentic-transfer-agent",
+  "version": "0.1.0",
+  "description": "Autonomous transfer agent with balance monitoring and multi-step workflows",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "tsx watch index.ts",
+    "start": "tsx index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "starknet",
+    "agent",
+    "autonomous",
+    "transfer",
+    "monitoring"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "starknet": "^10.0.2",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

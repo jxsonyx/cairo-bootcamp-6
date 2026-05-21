@@ -1,0 +1,80 @@
+name: Starkskills Site
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/starkskills_site/**"
+      - "datasets/**"
+      - "evals/**"
+      - "skills/**"
+      - ".claude-plugin/plugin.json"
+      - "SKILL.md"
+      - ".github/workflows/starkskills-site.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/starkskills_site/**"
+      - "datasets/**"
+      - "evals/**"
+      - "skills/**"
+      - ".claude-plugin/plugin.json"
+      - "SKILL.md"
+      - ".github/workflows/starkskills-site.yml"
+
+concurrency:
+  group: starkskills-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Starkskills Site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Build static site
+        run: |
+          python3 scripts/starkskills_site/build_site.py \
+            --domain starkskills.org \
+            --output-dir starkskills-site
+
+      - name: Validate generated output
+        run: |
+          test -f starkskills-site/index.html
+          test -f starkskills-site/vuln-cards/index.html
+          test -f starkskills-site/data/site-data.json
+          test -f starkskills-site/CNAME
+          grep -q "keep-starknet-strange/starknet-agentic" starkskills-site/index.html
+          ! grep -q "keep-starknet-strange/starknet-skills" starkskills-site/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: starkskills-site
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build]
+    name: Deploy Starkskills Site
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

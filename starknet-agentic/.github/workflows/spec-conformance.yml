@@ -1,0 +1,126 @@
+name: Spec Conformance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'contracts/session-account/**'
+      - 'packages/**'
+      - 'spec/interop-version.json'
+      - 'spec/interop-version.schema.json'
+      - 'docs/**'
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/session-account/**'
+      - 'packages/**'
+      - 'spec/interop-version.json'
+      - 'spec/interop-version.schema.json'
+      - 'docs/**'
+  repository_dispatch:
+    types: [spec-conformance-request]
+  schedule:
+    - cron: '40 5 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: spec-conformance-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  SISNA_REPO: ${{ vars.SISNA_REPO }}
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current repo
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+
+      - name: Setup Node.js (for schema validation)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '20'
+
+      - name: Validate local interop manifest (schema)
+        run: |
+          set -euo pipefail
+          npx --yes ajv-cli@5 validate --spec=draft2020 --strict=true \
+            -s spec/interop-version.schema.json \
+            -d spec/interop-version.json
+
+      - name: Clone counterpart repos
+        run: |
+          set -euo pipefail
+          SISNA_TARGET="${SISNA_REPO:-omarespejel/SISNA}"
+          git clone --depth 1 https://github.com/keep-starknet-strange/starkclaw.git /tmp/starkclaw
+          git clone --depth 1 "https://github.com/${SISNA_TARGET}.git" /tmp/SISNA
+
+      - name: Enforce schema parity across repos
+        run: |
+          set -euo pipefail
+          OPTIONAL_ADDITIVE_FIELDS="timestamp_max_age_seconds nonce_uniqueness"
+
+          normalize_schema() {
+            local schema_path="$1"
+            local del_args=""
+            for additive_field in $OPTIONAL_ADDITIVE_FIELDS; do
+              del_args="${del_args}.\"${additive_field}\","
+            done
+            del_args="${del_args%,}"
+            jq '
+              .properties |= (
+                if type == "object"
+                then del('"$del_args"')
+                else .
+                end
+              )
+            ' "$schema_path"
+          }
+
+          for counterpart in /tmp/starkclaw /tmp/SISNA; do
+            schema_file="$counterpart/spec/interop-version.schema.json"
+            if [[ -f "$schema_file" ]]; then
+              diff -u \
+                <(normalize_schema spec/interop-version.schema.json) \
+                <(normalize_schema "$schema_file")
+
+              for additive_field in $OPTIONAL_ADDITIVE_FIELDS; do
+                if jq -e --arg key "$additive_field" '.properties[$key] != null' spec/interop-version.schema.json >/dev/null \
+                  && ! jq -e --arg key "$additive_field" '.properties[$key] != null' "$schema_file" >/dev/null; then
+                  echo "::warning::$counterpart schema is missing optional additive field: $additive_field"
+                fi
+              done
+            else
+              echo "::warning::Skipping schema parity for $counterpart (missing $schema_file on target branch)"
+            fi
+          done
+
+      - name: Compare spec version across repos
+        run: |
+          set -euo pipefail
+          LOCAL_VERSION=$(jq -r '.spec_version' spec/interop-version.json)
+          echo "agentic=$LOCAL_VERSION"
+          for counterpart in /tmp/starkclaw /tmp/SISNA; do
+            manifest_file="$counterpart/spec/interop-version.json"
+            if [[ -f "$manifest_file" ]]; then
+              COUNTERPART_VERSION=$(jq -r '.spec_version' "$manifest_file")
+              echo "$counterpart=$COUNTERPART_VERSION"
+              test "$LOCAL_VERSION" = "$COUNTERPART_VERSION"
+            else
+              echo "::warning::Skipping version parity for $counterpart (missing $manifest_file on target branch)"
+            fi
+          done
+
+      - name: Validate boundary invariants
+        run: |
+          set -euo pipefail
+          grep -nE "if signature\\.len\\(\\) == 4" contracts/session-account/src/account.cairo
+          grep -nE "signature\\.at\\(3\\)" contracts/session-account/src/account.cairo
+          grep -nE "parsed\\.signature\\.length !== 4" /tmp/starkclaw/apps/mobile/lib/signer/keyring-proxy-signer.ts
+          grep -nE "name: X-Keyring-Signature" /tmp/SISNA/docs/api-spec.yaml
+          grep -nE "validUntil:" /tmp/SISNA/docs/api-spec.yaml
+          grep -nE "/v1/sign/session-transaction:" /tmp/SISNA/docs/api-spec.yaml

@@ -1,0 +1,160 @@
+---
+title: Cairo Development Skills
+description: Workflow-first guide to the migrated Cairo skill family in Starknet Agentic
+---
+
+import { Callout, Steps, Step } from "@/components/docs";
+
+# Cairo Development Skills
+
+Starknet Agentic ships Cairo support as a coordinated skill family. Load the skill that matches the current stage of work, then move forward through the workflow rather than asking one skill to do everything.
+
+<Callout type="info" title="Canonical Skill IDs">
+This page stays on the historical <code>/docs/skills/cairo-coding</code> route for continuity, but the canonical install and invocation names are the skill IDs listed below.
+</Callout>
+
+## Core Cairo Skills
+
+| Skill | Purpose | Load it when |
+|-------|---------|--------------|
+| [cairo-contract-authoring](/docs/skills/cairo-contract-authoring) | Workflow-first contract authoring with language guidance, component wiring, and secure defaults | You are writing or modifying Cairo contract code |
+| [cairo-testing](/docs/skills/cairo-testing) | snforge unit, integration, fuzz, and regression testing patterns | Contract logic exists and needs repeatable tests |
+| [cairo-auditor](/docs/skills/cairo-auditor) | Multi-step audit orchestration with deterministic findings gates | You are reviewing code for security risks or triaging findings |
+| [cairo-optimization](/docs/skills/cairo-optimization) | Profile-driven optimization, BoundedInt rules, and benchmarking | Tests already pass and you are reducing step count or gas |
+| [cairo-deploy](/docs/skills/cairo-deploy) | `sncast` account setup, declare/deploy flow, network config, and verification | Code is ready to declare, deploy, verify, or invoke |
+
+## Adjacent Correctness Skills
+
+These are not part of the five-stage authoring flow, but they matter when the task crosses account boundaries or protocol constraints.
+
+| Skill | Purpose | Load it when |
+|-------|---------|--------------|
+| [account-abstraction](/docs/skills/account-abstraction) | Validate/execute path correctness, session-key safety, signature and nonce handling | The contract behaves like an account or delegates execution authority |
+| [starknet-network-facts](/docs/skills/starknet-network-facts) | Network-level protocol facts that affect contract and transaction safety | You need chain/version facts that change reasoning about fees, tx versions, or execution |
+
+## Installation
+
+### Agent Skills CLI
+
+```bash
+# Install the full repo catalog
+npx skills add keep-starknet-strange/starknet-agentic
+
+# Or install only the Cairo workflow skills you need
+npx skills add keep-starknet-strange/starknet-agentic/skills/cairo-contract-authoring
+npx skills add keep-starknet-strange/starknet-agentic/skills/cairo-testing
+npx skills add keep-starknet-strange/starknet-agentic/skills/cairo-auditor
+npx skills add keep-starknet-strange/starknet-agentic/skills/cairo-optimization
+npx skills add keep-starknet-strange/starknet-agentic/skills/cairo-deploy
+```
+
+### Claude Code Marketplace Bundle
+
+```bash
+/plugin marketplace add keep-starknet-strange/starknet-agentic
+/plugin install starknet-agentic-skills@starknet-agentic-skills --scope user
+/reload-plugins
+/plugin menu
+
+# Example bundled invocations
+/starknet-agentic-skills:cairo-contract-authoring
+/starknet-agentic-skills:cairo-auditor
+```
+
+## Recommended Workflow
+
+<Steps>
+<Step number={1} title="Author">
+Start with <code>cairo-contract-authoring</code> to define interfaces, storage, events, component composition, and access posture.
+</Step>
+<Step number={2} title="Test">
+Move to <code>cairo-testing</code> once the code exists. Cover success paths, auth failures, events, and regression cases before optimizing.
+</Step>
+<Step number={3} title="Audit">
+Run <code>cairo-auditor</code> on the tested codebase. Treat findings as design feedback, not as a substitute for writing tests.
+</Step>
+<Step number={4} title="Optimize">
+Use <code>cairo-optimization</code> only after correctness is stable. Profile first, then apply one optimization class at a time.
+</Step>
+<Step number={5} title="Deploy">
+Finish with <code>cairo-deploy</code> for account import, declaration, deployment, verification, and post-deploy checks.
+</Step>
+</Steps>
+
+## Skill Boundaries
+
+### `cairo-contract-authoring`
+
+Use it for:
+
+- new contracts and components
+- storage, events, interfaces, constructors
+- OpenZeppelin component composition
+- secure authoring defaults and audit handoff prep
+
+Do not use it for:
+
+- writing the full test suite
+- benchmarking or profiling hot paths
+- repo-wide security review after implementation
+
+### `cairo-testing`
+
+Use it for:
+
+- unit and integration tests
+- fuzz and regression suites
+- event assertions and cheatcode usage
+
+Do not use it for:
+
+- first-pass contract architecture
+- deployment scripts
+- late security triage without tests
+
+### `cairo-auditor`
+
+Use it for:
+
+- repo or contract security review
+- finding classification and exploit reasoning
+- turning suspected issues into concrete findings
+
+Do not use it for:
+
+- replacing the authoring or testing stages
+- performance tuning
+- network/account setup
+
+### `cairo-optimization`
+
+Use it for:
+
+- step-count and gas reduction
+- BoundedInt refactors
+- storage packing
+- profiling with bundled tooling
+
+Do not use it for:
+
+- code that does not compile or pass tests
+- security signoff
+- deployment runbooks
+
+### `cairo-deploy`
+
+Use it for:
+
+- `sncast` accounts and profiles
+- declare/deploy/invoke/call flows
+- verification and network configuration
+
+Do not use it for:
+
+- contract design
+- test strategy
+- performance analysis
+
+## Migration Notes
+
+The Cairo cutover and legacy-name mapping are documented in [CAIRO_SKILLS_MIGRATION.md](https://github.com/keep-starknet-strange/starknet-agentic/blob/main/docs/CAIRO_SKILLS_MIGRATION.md).

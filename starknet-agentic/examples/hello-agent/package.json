@@ -1,0 +1,12 @@
+{
+  "name": "hello-agent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "starknet": "^10.0.2"
+  }
+}
